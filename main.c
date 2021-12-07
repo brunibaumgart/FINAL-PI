@@ -5,7 +5,7 @@
 #define ARGMTS 3       //Cantidad de argumentos a leer
 #define QUERIES 3      //Cantidad de queries
 #define MAXGEN 32      //Cantidad maxima de generos
-#define GEN_SIZE 64    //Cantidad maxima de caracteres de un genero (arbitrario)
+#define GEN_SIZE 32    //Cantidad maxima de caracteres de un genero (arbitrario)
 #define MAXBUFF 512    //Cantidad maxima de caracteres de una linea (arbitrario)
 #define DELIM ";"      //Delimitador de lectura de base de datos
 #define DELIMGENRE "," //Delimitador de lectura de generos
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
     imdbADT imdb = newImdb();
 
-    char *allGens[MAXGEN], gen[GEN_SIZE], buff[MAXBUFF], *title, *type, *genres, *token;
+    char allGens[MAXGEN][GEN_SIZE], gen[GEN_SIZE], buff[MAXBUFF], *title, *type, *genres, *token;
     int year,rating, votes, limit = 0;
 
     if (fgets(gen, GEN_SIZE, genresF) == NULL)
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
     while (fgets(gen, GEN_SIZE, genresF) != NULL && limit != MAXGEN)
     {
-        allGens[limit++] = gen; //CHECKEAR (bruno)
+        strcpy(allGens[limit++], gen);
     }
 
     while (fgets(buff, MAXBUFF, filmsF) != NULL)
@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 void errorOut(const char *message, int code)
 {
     fprintf(stderr, "%s Exit code: %d", message, code);
+    exit(code);
 }
 
 void checkFiles(FILE *files[], size_t fileCount)
