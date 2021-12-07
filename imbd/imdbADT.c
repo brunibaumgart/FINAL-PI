@@ -29,7 +29,7 @@ typedef struct year{
 
 typedef TYear * TListYear;
 
-typedef struct imbdCDT{
+typedef struct imdbCDT{
     TListYear first;
     size_t qtyYears;
-}imbdCDT;
+}imdbCDT;
