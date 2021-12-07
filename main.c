@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <errno.h>
-#include "imbd\imdbADT.h"
+#include "imdb\imdbADT.h"
 
 #define ARGMTS 3       //Cantidad de argumentos a leer
 #define QUERIES 3      //Cantidad de queries
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
             }
         }
         if(!invalidYear){
-            
+
         }
     }
 }
