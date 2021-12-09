@@ -117,26 +117,29 @@ int main(int argc, char *argv[])
         }
         if (!invalidYear)
         {
+            titleTypeG typeFlag;
+            if (strcmp(type, TSHORT) == 0)
+            {
+                addToYear(imdb, SHORT_Y, title, year, genres, rating, votes);
+            }
+
+            if (strcmp(type, TMOVIE) == 0)
+            {
+                addToYear(imdb, MOVIE_Y, title, year, genres, rating, votes);
+                typeFlag = MOVIE_G;
+            }
+
+            if (strcmp(type, TSERIES) == 0 || strcmp(type, TMSERIES) == 0)
+            {
+                addToYear(imdb, SERIES_Y, title, year, genres, rating, votes);
+                typeFlag = SERIES_G;
+            }
             char *genToBack = strtok(genres, DELIMGENRE);
             while (genToBack != NULL)
             {
                 if (checkGenre(genToBack, allGens, limit))
                 {
-                    //CHECKEAR
-                    if (strcmp(type, TSHORT) == 0)
-                    {
-                        addToYear(imdb, SHORT_Y, title, year, genToBack, rating, votes);
-                    }
-
-                    if (strcmp(type, TMOVIE) == 0)
-                    {
-                        addToYear(imdb, MOVIE_Y, title, year, genToBack, rating, votes);
-                    }
-
-                    if (strcmp(type, TSERIES) == 0 || strcmp(type, TMSERIES) == 0 )
-                    {
-                        addToYear(imdb, SERIES_Y, title, year, genToBack, rating, votes);
-                    }
+                    addToGenre(imdb, typeFlag, genToBack, year);
                 }
                 genToBack = strtok(NULL, DELIMGENRE);
             }
