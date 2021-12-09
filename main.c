@@ -9,7 +9,7 @@
 #define MAXBUFF 512    //Cantidad maxima de caracteres de una linea (arbitrario)
 #define DELIM ";"      //Delimitador de lectura de base de datos
 #define DELIMGENRE "," //Delimitador de lectura de generos
-#define NONE "\\N"      //Indicador sin datos
+#define NONE "\\N"     //Indicador sin datos
 
 void errorOut(const char *message, int code);
 
@@ -18,6 +18,8 @@ void checkFiles(FILE *files[], size_t fileCount);
 void closeFiles(FILE *files[], size_t fileCount);
 
 void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, int code);
+
+int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit);
 
 typedef enum DATA
 {
@@ -61,11 +63,12 @@ int main(int argc, char *argv[])
     imdbADT imdb = newImdb();
 
     char allGens[MAXGEN][GEN_SIZE], gen[GEN_SIZE], buff[MAXBUFF], *title, *type, *genres, *token;
-    int year,rating, votes, limit = 0;
+    size_t year, votes, limit = 0;
+    float rating;
 
     if (fgets(gen, GEN_SIZE, genresF) == NULL)
     {
-        closeAll(imdb, files, fileCount, "El archivo se encuentra vacio", EINVAL);
+        closeAll(imdb, files, fileCount, "El archivo genres se encuentra vacio", EINVAL);
     }
 
     while (fgets(gen, GEN_SIZE, genresF) != NULL && limit != MAXGEN)
@@ -73,11 +76,17 @@ int main(int argc, char *argv[])
         strcpy(allGens[limit++], gen);
     }
 
+    if (fgets(buff, MAXBUFF, filmsF) == NULL)
+    {
+        closeAll(imdb, files, fileCount, "El archivo imdb se encuentra vacio", EINVAL);
+    }
+
     while (fgets(buff, MAXBUFF, filmsF) != NULL)
     {
-        int invalidYear = 0;
+        int invalidYear = 0; //Si el filme no tiene anio de comienzo, debemos
         token = strtok(buff, DELIM);
-        for (size_t place = 0; place < CANTDATA && token != NULL && !invalidYear; place++, token = (NULL, DELIM))
+        size_t place; //Representa el lugar/campo en el que me encuentro en la linea (id,type,etc)
+        for (place = 0; place < CANTDATA && token != NULL && !invalidYear; place++, token = strtok(NULL, DELIM))
         {
             switch (place)
             {
@@ -97,13 +106,24 @@ int main(int argc, char *argv[])
             case GENRES:
                 genres = token;
 
-            case RATING: rating = atof(token);break;
+            case RATING:
+                rating = atof(token);
+                break;
 
-            case VOTES:  votes = atoi(token); break;
+            case VOTES:
+                votes = atoi(token);
+                break;
             }
         }
-        if(!invalidYear){
-
+        if (!invalidYear)
+        {
+            char *genToBack = strtok(genres, DELIMGENRE);
+            while (genToBack != NULL)
+            {
+                if (checkGenre(genToBack, allGens, limit))
+                    addToYear(imdb, type, title, year, genToBack, rating, votes);
+                genToBack = strtok(NULL, DELIMGENRE);
+            }
         }
     }
 }
@@ -140,4 +160,16 @@ void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, in
     freeImdb(imdb);
     closeFiles(files, fileCount);
     errorOut(message, code);
+}
+
+int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit)
+{
+    for (int i = 0; i < limit; i++)
+    {
+        if (strcmp(genre, genList[i]) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }

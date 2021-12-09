@@ -6,10 +6,10 @@ typedef struct imdbCDT *imdbADT;
 imdbADT newImdb();
 
 //Agrega la pelicula/serie/corto a su anio
-int addToYear(imdbADT imdb, char *type, char *title, size_t year, char **genres, double rating, long votes);
+int addToYear(imdbADT imdb, char *type, char *title, size_t year, char *genres, double rating, long votes);
 
 //Agrega la pelicula o serie a sus generos
-int addToGenre(imdbADT imdb, char *type, char **genres);
+int addToGenre(imdbADT imdb, char *type, char *genres, int year);
 
 //Devuelve la cantidad de peliculas que hay en ese anio
 size_t filmsInYear(imdbADT imdb, size_t year);
@@ -27,7 +27,7 @@ size_t filmsInGenre(imdbADT imdb, char *genre);
 size_t seriesInGenre(imdbADT imdb, char *genre);
 
 //Devuelve las mejores rated peliculas de ese anio con su nro de votos, rating y generos
-char ** topFive(imdbADT imdb, size_t year);
+char **topFive(imdbADT imdb, size_t year);
 
 //Libera todos los recursos del imdb
 void freeImdb(imdbADT imdb);
