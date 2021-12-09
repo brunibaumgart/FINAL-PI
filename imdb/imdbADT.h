@@ -26,7 +26,7 @@ typedef enum titleTypeY
 imdbADT newImdb();
 
 //Agrega la pelicula/serie/corto a su anio
-int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, double rating, long votes);
+int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genre, double rating, long votes);
 
 //Agrega la pelicula o serie a sus generos
 int addToGenre(imdbADT imdb, titleTypeG type, char *genres, int year);
