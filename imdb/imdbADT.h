@@ -2,14 +2,34 @@
 
 typedef struct imdbCDT *imdbADT;
 
+#define TMOVIE "movie"
+#define TSHORT "short"
+#define TSERIES "tvSeries"
+#define TMSERIES "tvMiniSeries"
+
+typedef enum titleTypeG
+{
+    MOVIE_G = 0,
+    SERIES_G,
+    CANT_TYPES_G
+} titleTypeG;
+
+typedef enum titleTypeY
+{
+    SHORT_Y = 0,
+    MOVIE_Y,
+    SERIES_Y,
+    CANT_TYPES_Y
+} titleTypeY;
+
 //Crea un nuevo imdbADT vacio
 imdbADT newImdb();
 
 //Agrega la pelicula/serie/corto a su anio
-int addToYear(imdbADT imdb, char *type, char *title, size_t year, char *genres, double rating, long votes);
+int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, double rating, long votes);
 
 //Agrega la pelicula o serie a sus generos
-int addToGenre(imdbADT imdb, char *type, char *genres, int year);
+int addToGenre(imdbADT imdb, titleTypeG type, char *genres, int year);
 
 //Devuelve la cantidad de peliculas que hay en ese anio
 size_t filmsInYear(imdbADT imdb, size_t year);

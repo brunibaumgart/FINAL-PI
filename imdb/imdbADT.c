@@ -1,29 +1,16 @@
 #include "imdbADT.h"
 #include <stdio.h>
+#include <errno.h>
+
 #define TOP 5
 
-typedef enum titleTypeY
-{
-    SHORT_Y = 0,
-    FILM_Y,
-    SERIES_Y,
-    CANT_TYPES_Y
-} titleTypeY;
-
-typedef enum titleTypeG
-{
-    FILM_G = 0,
-    SERIES_G,
-    CANT_TYPES_G
-} titleTypeG;
-
-typedef struct film
+typedef struct movie
 {
     char *name;
     size_t votes;
     float rating;
     char **genres; //Generos a los que pertence la pelicula (puede ser + de 1)
-} TFilm;
+} TMovie;
 
 typedef struct genre
 {
@@ -39,7 +26,7 @@ typedef struct year
     size_t year;                //Anio actual
     TListGenre firstGenre;      //Puntero al primer nodo da la lista de generos
     size_t types[CANT_TYPES_Y]; //En cada posicion se guarda la cantidad de cortos/peliculas/series del anio
-    TFilm topFilms[TOP];        //TOP 5 peliculas mas votadas del anio
+    TMovie topFilms[TOP];       //TOP 5 peliculas mas votadas del anio
     struct year *next;          //Puntero al siguiente anio
 } TYear;
 
@@ -57,7 +44,7 @@ imdbADT newImdb()
 }
 
 //Agrega la pelicula/serie/corto a su anio
-int addToYear(imdbADT imdb, char *type, char *title, size_t year, char *genres, double rating, long votes)
+int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, double rating, long votes)
 {
 }
 
@@ -67,31 +54,81 @@ static TListYear searchYear(TListYear listY, int year)
     int value;
     if (listY == NULL || (value = compareYear(listY->year, year)) > 0)
     {
-        //implica que la lista es vacia, o que no encontrare el anio mas adelante (orden)
+        //Implica que la lista es vacia, o que no encontrare el anio mas adelante (orden)
         return NULL;
     }
 
     if (value == 0)
     {
-        //hemos encontrado el anio buscado
+        //Hemos encontrado el anio buscado
         return listY;
     }
 
-    //seguimos buscando el anio en la sublista
+    //Seguimos buscando el anio en la sublista
     return searchYear(listY->next, year);
 }
 
+static TListYear addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag)
+{
+    int value;
+    if (listG == NULL || (value = strcmp(listG->genre, genre)) > 0)
+    {
+        //Debemos agregar el nuevo genero
+        TListGenre newGenre = malloc(sizeof(TGenre));
+
+        //Debemos validar si se ha logrado reservar memoria
+        if (newGenre == NULL) //ERRNO???
+        {
+            //Si no es posible crear el nuevo nodo, entonces debo devolver la lista de todas formas
+            return listG;
+        }
+
+        newGenre->genre = malloc(strlen(genre) + 1);
+
+        //Debemos validar si se ha logrado reservar memoria
+        if (newGenre->genre == NULL)
+        {
+            //Como el nuevo nodo se ha creado, debemos liberar la memoria que se ha reservado
+            free(newGenre);
+            //Si no es posible crear el nuevo nodo, entonces debo devolver la lista de todas formas
+            return listG;
+        }
+
+        strcpy(newGenre->genre, genre);
+
+        newGenre->types[type] = 1;
+        //Encadenamos el nuevo nodo con la lista
+        newGenre->next = listG;
+        (*flag) = 1;
+        return newGenre;
+    }
+
+    if (value == 0)
+    {
+        (*flag) = 1;
+        listG->types[type]++;
+        return listG;
+    }
+
+    //(value < 0) Seguimos buscando en la sublista de generos
+    listG->next = addToGenreRec(listG->next, type, genre, year, flag);
+    return listG;
+}
+
 //Agrega la pelicula o serie a sus generos
-int addToGenre(imdbADT imdb, char *type, char *genres, int year)
+//Devuelve 1 si agrego, 0 si no
+int addToGenre(imdbADT imdb, titleTypeG type, char *genre, int year)
 {
     TListYear yearAux = searchYear(imdb->first, year);
 
     if (yearAux == NULL)
     {
+        //No se ha encontrado el anio al que queremos agregar el genero
         return 0;
     }
-
-    imdb->first = addToGenreRec(imdb->first, type, genres, year);
+    int flag = 0;
+    yearAux->firstGenre = addToGenreRec(yearAux->firstGenre, type, genre, year, &flag);
+    return flag;
 }
 
 //Devuelve la cantidad de peliculas que hay en ese anio
@@ -113,4 +150,7 @@ size_t seriesInGenre(imdbADT imdb, char *genre);
 char **topFive(imdbADT imdb, size_t year);
 
 //Libera todos los recursos del imdb
-void freeImdb(imdbADT imdb);
+void freeImdb(imdbADT imdb)
+{
+    
+}

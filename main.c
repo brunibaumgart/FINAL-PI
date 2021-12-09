@@ -121,7 +121,23 @@ int main(int argc, char *argv[])
             while (genToBack != NULL)
             {
                 if (checkGenre(genToBack, allGens, limit))
-                    addToYear(imdb, type, title, year, genToBack, rating, votes);
+                {
+                    //CHECKEAR
+                    if (strcmp(type, TSHORT) == 0)
+                    {
+                        addToYear(imdb, SHORT_Y, title, year, genToBack, rating, votes);
+                    }
+
+                    if (strcmp(type, TMOVIE) == 0)
+                    {
+                        addToYear(imdb, MOVIE_Y, title, year, genToBack, rating, votes);
+                    }
+
+                    if (strcmp(type, TSERIES) == 0 || strcmp(type, TMSERIES) == 0 )
+                    {
+                        addToYear(imdb, SERIES_Y, title, year, genToBack, rating, votes);
+                    }
+                }
                 genToBack = strtok(NULL, DELIMGENRE);
             }
         }
