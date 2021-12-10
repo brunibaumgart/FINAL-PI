@@ -2,6 +2,7 @@
 
 typedef struct imdbCDT *imdbADT;
 
+#define TOP 5
 #define TMOVIE "movie"
 #define TSHORT "short"
 #define TSERIES "tvSeries"
@@ -26,28 +27,30 @@ typedef enum titleTypeY
 imdbADT newImdb();
 
 //Agrega la pelicula/serie/corto a su anio
-int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genre, double rating, long votes);
+int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genre, float rating, size_t votes);
 
 //Agrega la pelicula o serie a sus generos
 int addToGenre(imdbADT imdb, titleTypeG type, char *genres, int year);
 
-//Devuelve la cantidad de peliculas que hay en ese anio
-size_t filmsInYear(imdbADT imdb, size_t year);
+//Inicia el iterador por anios
+void toBeginYear(imdbADT imdb);
 
-//Devuelve la cantidad de serie que hay en ese anio
-size_t seriesInYear(imdbADT imdb, size_t year);
+//Verifica si existe un año despues del actual, devuelve 1 si lo hay, 0 si no
+int hasNextYear(imdbADT imdb);
 
-//Devuelve la cantidad de shorts que hay en ese anio
-size_t shortsInYear(imdbADT imdb, size_t year);
+//Avanza el iterador al siguiente año, retorna 0 en caso de algun error, 1 si no existio tal problema
+int nextYear(imdbADT imdb);
 
-//Devuelve la cantidad de peliculas que hay en ese genero
-size_t filmsInGenre(imdbADT imdb, char *genre);
+//Inicia el iterador por generos (lo hace en el anio correspondiente donde se esta iterando)
+void toBeginGenre(imdbADT imdb);
 
-//Devuelve la cantidad de series que hay en ese genero
-size_t seriesInGenre(imdbADT imdb, char *genre);
+//Verifica si existe un siguiente genero, si es asi devuelve 1 sino 0
+int hasNextGenre(imdbADT imdb);
 
-//Devuelve las mejores rated peliculas de ese anio con su nro de votos, rating y generos
-char **topFive(imdbADT imdb, size_t year);
+//Avanza el iterador al siguiente genero, retorna 0 en caso de algun error, 1 si no existio tal problema
+int nextGenre(imdbADT imdb);
+
+size_t getTypeCant(imdbADT imdb, titleTypeY type);
 
 //Libera todos los recursos del imdb
 void freeImdb(imdbADT imdb);

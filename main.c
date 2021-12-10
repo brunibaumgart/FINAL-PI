@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <errno.h>
-#include "imdb\imdbADT.h"
+#include "imdb/imdbADT.h"
+
+#define FIRSTLINE1 "year;films;series;shorts"
+#define FIRSTLINE2 "year;genre;films;series"
+#define FIRSTLINE3 "year;film;votes;rating;genres"
 
 #define ARGMTS 3       //Cantidad de argumentos a leer
 #define QUERIES 3      //Cantidad de queries
@@ -55,9 +59,8 @@ int main(int argc, char *argv[])
     FILE *query3 = fopen("query3.csv", "w+");
     FILE *files[] = {filmsF, genresF, query1, query2, query3};
     size_t fileCount = QUERIES + argc - 1;
-    /*
-    ** Primero debemos chequear que se han podido abrir correctamente los archivos
-    */
+
+    //Primero debemos chequear que se han podido abrir correctamente los archivos
     checkFiles(files, fileCount);
 
     imdbADT imdb = newImdb();
@@ -115,9 +118,11 @@ int main(int argc, char *argv[])
                 break;
             }
         }
+        
+        //Debemos verificar que el anio sea valido (startYear != \N)
         if (!invalidYear)
         {
-            titleTypeG typeFlag;
+            titleTypeG typeFlag; //Indicador de pelicula o serie para generos
             if (strcmp(type, TSHORT) == 0)
             {
                 addToYear(imdb, SHORT_Y, title, year, genres, rating, votes);
@@ -134,6 +139,7 @@ int main(int argc, char *argv[])
                 addToYear(imdb, SERIES_Y, title, year, genres, rating, votes);
                 typeFlag = SERIES_G;
             }
+
             char *genToBack = strtok(genres, DELIMGENRE);
             while (genToBack != NULL)
             {
@@ -144,6 +150,28 @@ int main(int argc, char *argv[])
                 genToBack = strtok(NULL, DELIMGENRE);
             }
         }
+        if (errno == ENOMEM)
+        {
+            closeAll(imdb, files, fileCount, "No hay memoria disponible en el heap", ENOMEM);
+        }
+    }
+
+    fprintf(query1, "%s\n", FIRSTLINE1);
+    fprintf(query2, "%s\n", FIRSTLINE2);
+    fprintf(query3, "%s\n", FIRSTLINE3);
+
+    toBeginYear(imdb);
+
+    while (hasNextYear(imdb))
+    {
+        toBeginGenre(imdb);
+        toQuery1();
+        toQuery2();
+        while (hasNextGenre(imdb))
+        {
+            nextGenre(imdb);
+        }
+        nextYear(imdb);
     }
 }
 
