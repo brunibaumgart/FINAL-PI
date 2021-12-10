@@ -43,6 +43,7 @@ typedef struct imdbCDT
     size_t qtyYears;      //Cantidad de anios
     TListYear iterYear;   //Iterador para acceder a los campos correspondientes por anio
     TListGenre iterGenre; //Iterador para acceder a los campos correspondiente por genero
+    TListMovie iterMovie;
 } imdbCDT;
 
 imdbADT newImdb()
@@ -286,6 +287,22 @@ int nextGenre(imdbADT imdb)
     imdb->iterGenre = imdb->iterGenre->next;
 }
 
+void toBeginMovieTop(imdbADT imdb){
+    imdb->iterMovie=imdb->iterYear->firstInTop;
+}
+
+int hasNextMovieTop(imdbADT imdb){
+    return imdb->iterMovie != NULL;
+}
+
+int nextMovieInTop(imdbADT imdb){
+    if (!hasNextMovieTop(imdb))
+    {
+        return 0;
+    }
+    imdb->iterMovie = imdb->iterMovie->next;
+}
+
 size_t getTypeCant(imdbADT imdb, titleTypeY type)
 {
     if (imdb == NULL || (type < 0 || type > CANT_TYPES_Y))
@@ -293,6 +310,16 @@ size_t getTypeCant(imdbADT imdb, titleTypeY type)
         return 0;
     }
     return imdb->iterYear->types[type];
+}
+char * getFilm(imdbADT imdb, titleTypeY type){
+    if (imdb == NULL || (type < 0 || type > CANT_TYPES_Y))
+    {
+        return 0;
+    }
+    char * title;
+    if(imdb->iterMovie->name != NULL){
+        title = copy(imdb->iterMovie->name);
+    }
 }
 
 static void freeGenreRec(TListGenre listG)

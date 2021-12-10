@@ -169,6 +169,7 @@ int main(int argc, char *argv[])
         toQuery2();
         while (hasNextGenre(imdb))
         {
+            
             nextGenre(imdb);
         }
         nextYear(imdb);

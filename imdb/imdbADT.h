@@ -50,7 +50,20 @@ int hasNextGenre(imdbADT imdb);
 //Avanza el iterador al siguiente genero, retorna 0 en caso de algun error, 1 si no existio tal problema
 int nextGenre(imdbADT imdb);
 
+//Inicia el iterador en la primer pelicula del top por año
+void toBeginMovieTop(imdbADT imdb);
+
+//Verifica si existe un siguiente pelicula en el top, si es asi devuelve 1 sino 0
+int hasNextMovieTop(imdbADT imdb);
+
+//Avanza el iterador a la siguiente pelicula retorna 0 en caso de algun error, 1 si no existio tal problema
+int nextMovieInTop(imdbADT imdb);
+
 size_t getTypeCant(imdbADT imdb, titleTypeY type);
+
+char * getFilm(imdbADT imdb, titleTypeY type);
+
+size_t getVotes(imdbADT imdb, titleTypeY type);
 
 //Libera todos los recursos del imdb
 void freeImdb(imdbADT imdb);
