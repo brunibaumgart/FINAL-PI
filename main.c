@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include "imdb/imdbADT.h"
 
@@ -18,7 +20,7 @@
 //Envia un mensaje indicando el error que se produjo, y aborta el programa
 void errorOut(const char *message, int code);
 
-//Verifica que se han logrado abrir correctamente los archivos recibidos
+//Verifica si se han logrado abrir correctamente los archivos recibidos, si se produjo un error cierra los mismos y envia el mensaje correspondiente
 void checkFiles(FILE *files[], size_t fileCount);
 
 //Cierra los archivos recibidos
@@ -29,6 +31,12 @@ void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, in
 
 //Verifica que el genero trabajado sea valido (se encuentre entre los primeros 32 obtenidos)
 int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit);
+
+void toQuery1(imdbADT imdb, FILE *query, size_t year);
+
+void toQuery2(imdbADT imdb, FILE *query, size_t year);
+
+void toQuery3(imdbADT imdb, FILE *query, size_t year);
 
 typedef enum DATA
 {
@@ -49,7 +57,6 @@ int main(int argc, char *argv[])
 {
     //La cantidad de argumentos debe ser 3 (el ejecutable, base de datos de peliculas,
     //base de datos de generos), caso contrario se debe imprimir un mensaje indicando el error.
-
     if (argc != ARGMTS)
     {
         errorOut("Cantidad de argumentos invalida", EINVAL);
@@ -165,23 +172,52 @@ int main(int argc, char *argv[])
     fprintf(query3, "%s\n", FIRSTLINE3);
 
     toBeginYear(imdb);
-
     while (hasNextYear(imdb))
     {
+        year = getYear(imdb);
         toBeginGenre(imdb);
-        toQuery1();
+        toQuery1(imdb, query1, year);
         while (hasNextGenre(imdb))
         {
-            toQuery2();
+            toQuery2(imdb, query2, year);
             nextGenre(imdb);
         }
         while (hasNextMovieTop(imdb))
         {
-            toQuery3();
+            toQuery3(imdb, query3, year);
             nextMovieInTop(imdb);
         }
         nextYear(imdb);
     }
+    freeImdb(imdb);
+}
+
+void toQuery1(imdbADT imdb, FILE *query, size_t year)
+{
+    int cants[CANT_TYPES_Y];
+    for (int i = 0; i < CANT_TYPES_Y; i++)
+    {
+        if ((cants[i] = getTypeCant(imdb, i)) == ERROR)
+            return;
+    }
+    fprintf(query, "%d%s%d%s%d%s%d\n", year, DELIM, cants[MOVIE_Y], DELIM, cants[SERIES_Y], DELIM, cants[SHORT_Y]);
+}
+
+void toQuery2(imdbADT imdb, FILE *query, size_t year)
+{
+    int cants[CANT_TYPES_G];
+    for (int i = 0; i < CANT_TYPES_G; i++)
+    {
+        if ((cants[i] = getTypeInGenre(imdb, i)) == ERROR)
+            return;
+    }
+    fprintf(query, "%d%s%s%s%d%s%d\n", year, DELIM, getGenre(imdb), DELIM, cants[MOVIE_G], DELIM, cants[SERIES_G]);
+}
+
+void toQuery3(imdbADT imdb, FILE *query, size_t year)
+{
+    //chequear si los titulos/generos son null (lo mismo con votos,rating)
+    fprintf(query, "%d%s%s%s%d%s%.2f%s%s\n", year, DELIM, getMovie(imdb), DELIM, getVotes(imdb), DELIM, getRating(imdb), DELIM, getTopGenres(imdb));
 }
 
 void errorOut(const char *message, int code)

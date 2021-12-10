@@ -1,6 +1,8 @@
 #include "imdbADT.h"
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define BLOCK 10
 
@@ -143,7 +145,7 @@ static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title,
 }
 
 //Carga los datos a un nuevo anio, o los actualiza en caso de que ya existiera
-static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *flag)
+static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *added)
 {
     int c;
     if (listY == NULL || (c = compare(listY->year, year)) < 0)
@@ -157,18 +159,22 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
         newYear->year = year;
         if (type == MOVIE_Y)
         {
-            newYear->firstInTop = updateTopRec(newYear->firstInTop, &newYear->lastAddedInTop, title, genres, rating, votes, TOP, flag);
+            int flag = 0;
+            newYear->firstInTop = updateTopRec(newYear->firstInTop, &newYear->lastAddedInTop, title, genres, rating, votes, TOP, &flag);
             newYear->sizeTop = 1;
         }
+        (*added) = 1;
         newYear->types[type] = 1;
         newYear->next = listY;
+        return newYear;
     }
     if (c == 0)
     {
         if (type == MOVIE_Y)
         {
-            listY->firstInTop = updateTopRec(listY->firstInTop, &listY->lastAddedInTop, title, genres, rating, votes, TOP, flag);
-            listY->sizeTop += (*flag);
+            int flag = 0;
+            listY->firstInTop = updateTopRec(listY->firstInTop, &listY->lastAddedInTop, title, genres, rating, votes, TOP, &flag);
+            listY->sizeTop += flag;
             if (listY->sizeTop > TOP)
             {
                 //Si supero el maximo, al haber desplazado las peliculas en una posicion, debo eliminar la ultima del top
@@ -177,14 +183,15 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
             }
         }
         listY->types[type]++;
+        return listY;
     }
-    listY->next = addToYearRec(listY->next, type, title, year, genres, rating, votes, flag);
+    listY->next = addToYearRec(listY->next, type, title, year, genres, rating, votes, added);
     return listY;
 }
 
 int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes)
 {
-    int flag = 0; //Se prende si se agrega una pelicula al top 5
+    int flag = 0; //Indica si se ha agregado un nuevo anio
     imdb->firstYear = addToYearRec(imdb->firstYear, type, title, year, genres, rating, votes, &flag);
     return flag;
 }
@@ -193,7 +200,7 @@ int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *gen
 static TListYear searchYear(TListYear listY, int year)
 {
     int c;
-    if (listY == NULL || (c = compareYear(listY->year, year)) < 0)
+    if (listY == NULL || (c = compare(listY->year, year)) < 0)
     {
         //Implica que la lista es vacia, o que no encontrare el anio mas adelante (orden)
         return NULL;
@@ -210,7 +217,7 @@ static TListYear searchYear(TListYear listY, int year)
 }
 
 //Carga los datos a un nuevo genero, o los actualiza en caso de que ya existiera
-static TListYear addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag)
+static TListGenre addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag)
 {
     int value;
     if (listG == NULL || (value = strcmp(listG->genre, genre)) > 0)
@@ -263,7 +270,7 @@ int addToGenre(imdbADT imdb, titleTypeG type, char *genre, int year)
         //No se ha encontrado el anio al que queremos agregar el genero
         return 0;
     }
-    int flag = 0; //Indica si se ha podido agregar o no al genero
+    int flag = 0; //Indica si se ha agregado un nuevo genero
     yearAux->firstGenre = addToGenreRec(yearAux->firstGenre, type, genre, year, &flag);
     return flag;
 }
@@ -319,48 +326,64 @@ int hasNextMovieTop(imdbADT imdb)
 int nextMovieInTop(imdbADT imdb)
 {
     if (!hasNextMovieTop(imdb))
-    {
         return 0;
-    }
     imdb->iterMovie = imdb->iterMovie->next;
 }
 
-size_t getTypeCant(imdbADT imdb, titleTypeY type)
+int getYear(imdbADT imdb)
 {
-    if (imdb == NULL)
-    {
-        return 0;
-    }
+    if (imdb == NULL || imdb->iterYear == NULL)
+        return ERROR;
+    return imdb->iterYear->year;
+}
+
+int getTypeCant(imdbADT imdb, titleTypeY type)
+{
+    if (imdb == NULL || imdb->iterYear == NULL)
+        return ERROR;
     return imdb->iterYear->types[type];
+}
+
+char *getGenre(imdbADT imdb)
+{
+    if (imdb == NULL || imdb->iterGenre == NULL)
+        return NULL;
+    char *out = copy(imdb->iterGenre->genre);
+    return out;
+}
+
+int getTypeInGenre(imdbADT imdb, titleTypeG type)
+{
+    if (imdb == NULL || imdb->iterGenre == NULL)
+        return ERROR;
+    return imdb->iterGenre->types[type];
 }
 
 char *getMovie(imdbADT imdb)
 {
-    if (imdb == NULL)
-    {
-        return 0;
-    }
+    if (imdb == NULL || imdb->iterMovie == NULL)
+        return NULL;
     char *title = copy(imdb->iterMovie->name);
     return title;
 }
 
-size_t getVotes(imdbADT imdb)
+int getVotes(imdbADT imdb)
 {
-    if (imdb == NULL)
-        return 0;
+    if (imdb == NULL || imdb->iterMovie == NULL)
+        return ERROR;
     return imdb->iterMovie->votes;
 }
 
 float getRating(imdbADT imdb)
 {
-    if (imdb == NULL)
-        return 0;
+    if (imdb == NULL || imdb->iterMovie == NULL)
+        return ERROR;
     return imdb->iterMovie->rating;
 }
 
-char *getGenre(imdbADT imdb)
+char *getTopGenres(imdbADT imdb)
 {
-    if (imdb == NULL)
+    if (imdb == NULL || imdb->iterMovie == NULL)
         return NULL;
     char *out = copy(imdb->iterMovie->genres);
     return out;
