@@ -15,14 +15,19 @@
 #define DELIMGENRE "," //Delimitador de lectura de generos
 #define NONE "\\N"     //Indicador sin datos
 
+//Envia un mensaje indicando el error que se produjo, y aborta el programa
 void errorOut(const char *message, int code);
 
+//Verifica que se han logrado abrir correctamente los archivos recibidos
 void checkFiles(FILE *files[], size_t fileCount);
 
+//Cierra los archivos recibidos
 void closeFiles(FILE *files[], size_t fileCount);
 
+//Libera la memoria reservada para el TAD, cierra los archivos e indica el error que se produjo
 void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, int code);
 
+//Verifica que el genero trabajado sea valido (se encuentre entre los primeros 32 obtenidos)
 int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit);
 
 typedef enum DATA
@@ -39,13 +44,12 @@ typedef enum DATA
     CANTDATA
 } DATA;
 
-//argc es la cantidad de argumentos y argv son los parametros
+//argc representa la cantidad de argumentos y argv los parametros
 int main(int argc, char *argv[])
 {
-    /* 
-    ** La cantidad de argumentos debe ser 3 (el ejecutable, base de datos de peliculas, 
-    ** base de datos de generos), caso contrario se debe imprimir un mensaje indicando el error.
-    */
+    //La cantidad de argumentos debe ser 3 (el ejecutable, base de datos de peliculas,
+    //base de datos de generos), caso contrario se debe imprimir un mensaje indicando el error.
+
     if (argc != ARGMTS)
     {
         errorOut("Cantidad de argumentos invalida", EINVAL);
@@ -118,7 +122,7 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        
+
         //Debemos verificar que el anio sea valido (startYear != \N)
         if (!invalidYear)
         {
@@ -171,7 +175,7 @@ int main(int argc, char *argv[])
             toQuery2();
             nextGenre(imdb);
         }
-        while(hasNextMovieTop(imdb))
+        while (hasNextMovieTop(imdb))
         {
             toQuery3();
             nextMovieInTop(imdb);

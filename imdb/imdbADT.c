@@ -42,7 +42,7 @@ typedef struct imdbCDT
     TListYear firstYear;  //Puntero al primer nodo da la lista de anios
     TListYear iterYear;   //Iterador para acceder a los campos correspondientes por anio
     TListGenre iterGenre; //Iterador para acceder a los campos correspondiente por genero
-    TListMovie iterMovie;
+    TListMovie iterMovie; ////Iterador para acceder a los campos correspondiente por pelicula
 } imdbCDT;
 
 imdbADT newImdb()
@@ -50,22 +50,24 @@ imdbADT newImdb()
     return calloc(1, sizeof(imdbCDT));
 }
 
+//Devuelve < 0, = 0 o > 0 con el fin de comparar tanto anios como votos
 static int compare(size_t e1, size_t e2)
 {
     return e1 - e2;
 }
 
+//Devuelve una copia del string s, o NULL en caso de que no se haya logrado reservar memoria
 static char *copy(const char *s)
 {
     char *aux = NULL;
     int dim = 0;
     for (int i = 0; s[i]; i++)
     {
-        //vamos a agrandar de a bloques
+        //Vamos a agrandar de a bloques
         if (dim % BLOCK == 0)
         {
             aux = realloc(aux, (dim + BLOCK) * sizeof(char));
-            //Si no pudimos reservar memoria,
+            //Si no pudimos reservar memoria
             if (aux == NULL || errno == ENOMEM)
             {
                 return NULL;
@@ -84,6 +86,7 @@ static char *copy(const char *s)
     return aux;
 }
 
+//Elimina el ultimo elemento del top (el menos votado o aquel que tiene menor orden alfabetico)
 static void deleteLastTop(TListMovie listM)
 {
     if (listM == NULL || listM->next == NULL)
@@ -93,17 +96,21 @@ static void deleteLastTop(TListMovie listM)
     deleteLastTop(listM->next);
 }
 
+//Comapara por cantidad de votos, y por orden alfabetico en caso de ser necesario
 static int compareTop(size_t v1, size_t v2, char *t1, char *t2)
 {
     int out = compare(v1, v2);
     if (out == 0)
     {
+        //Solo tomo en cuenta el orden alfabetico si la cantidad de votos es la misma
         out = strcmp(t2, t1);
     }
     return out;
 }
 
-static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title, char *genres, float rating, size_t votes, size_t top, int * flag)
+//Actualiza el top 5 de peliculas
+//Devuelve una lista ordenada de las peliculas con mas votos
+static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title, char *genres, float rating, size_t votes, size_t top, int *flag)
 {
     int c;
     //Hice TOP recorridos
@@ -111,10 +118,16 @@ static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title,
     {
         return listM;
     }
-    //Inserto en la ultima posicion o en orden
+    //Inserto en orden descendente por cantidad de votos, o en caso de ser iguales, por orden alfabetico
     if (listM == NULL || (c = compareTop(listM->votes, votes, listM->name, title)) < 0)
     {
         TListMovie newMovie = malloc(sizeof(TMovie));
+
+        //Debemos chequear si se ha podido reservar memoria
+        if (newMovie == NULL || errno == ENOMEM)
+        {
+            return listM;
+        }
         newMovie->name = copy(title);
         newMovie->votes = votes;
         newMovie->rating = rating;
@@ -129,7 +142,8 @@ static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title,
     return listM;
 }
 
-static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int * flag)
+//Carga los datos a un nuevo anio, o los actualiza en caso de que ya existiera
+static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *flag)
 {
     int c;
     if (listY == NULL || (c = compare(listY->year, year)) < 0)
@@ -141,7 +155,7 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
             return listY;
         }
         newYear->year = year;
-        if(type == MOVIE_Y)
+        if (type == MOVIE_Y)
         {
             newYear->firstInTop = updateTopRec(newYear->firstInTop, &newYear->lastAddedInTop, title, genres, rating, votes, TOP, flag);
             newYear->sizeTop = 1;
@@ -151,13 +165,13 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
     }
     if (c == 0)
     {
-        if(type == MOVIE_Y)
+        if (type == MOVIE_Y)
         {
             listY->firstInTop = updateTopRec(listY->firstInTop, &listY->lastAddedInTop, title, genres, rating, votes, TOP, flag);
             listY->sizeTop += (*flag);
             if (listY->sizeTop > TOP)
             {
-                //Si supero el maximo, al haber desplazado las peliculas hacia la derecha, debo eliminar la ultima del top
+                //Si supero el maximo, al haber desplazado las peliculas en una posicion, debo eliminar la ultima del top
                 deleteLastTop(listY->lastAddedInTop);
                 listY->sizeTop--;
             }
@@ -168,11 +182,10 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
     return listY;
 }
 
-//Agrega la pelicula/serie/corto a su anio
 int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes)
 {
     int flag = 0; //Se prende si se agrega una pelicula al top 5
-    imdb->firstYear = addToYearRec(imdb->firstYear, type, title, year, genres, rating, votes,&flag);
+    imdb->firstYear = addToYearRec(imdb->firstYear, type, title, year, genres, rating, votes, &flag);
     return flag;
 }
 
@@ -196,6 +209,7 @@ static TListYear searchYear(TListYear listY, int year)
     return searchYear(listY->next, year);
 }
 
+//Carga los datos a un nuevo genero, o los actualiza en caso de que ya existiera
 static TListYear addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag)
 {
     int value;
@@ -240,8 +254,6 @@ static TListYear addToGenreRec(TListGenre listG, titleTypeG type, char *genre, i
     return listG;
 }
 
-//Agrega la pelicula o serie a sus generos
-//Devuelve 1 si se ha podido agregar, 0 en caso contrario
 int addToGenre(imdbADT imdb, titleTypeG type, char *genre, int year)
 {
     TListYear yearAux = searchYear(imdb->firstYear, year);
@@ -294,15 +306,18 @@ int nextGenre(imdbADT imdb)
     imdb->iterGenre = imdb->iterGenre->next;
 }
 
-void toBeginMovieTop(imdbADT imdb){
-    imdb->iterMovie=imdb->iterYear->firstInTop;
+void toBeginMovieTop(imdbADT imdb)
+{
+    imdb->iterMovie = imdb->iterYear->firstInTop;
 }
 
-int hasNextMovieTop(imdbADT imdb){
+int hasNextMovieTop(imdbADT imdb)
+{
     return imdb->iterMovie != NULL;
 }
 
-int nextMovieInTop(imdbADT imdb){
+int nextMovieInTop(imdbADT imdb)
+{
     if (!hasNextMovieTop(imdb))
     {
         return 0;
@@ -319,38 +334,39 @@ size_t getTypeCant(imdbADT imdb, titleTypeY type)
     return imdb->iterYear->types[type];
 }
 
-char * getFilm(imdbADT imdb)
+char *getMovie(imdbADT imdb)
 {
     if (imdb == NULL)
     {
         return 0;
     }
-    char * title = copy(imdb->iterMovie->name);
+    char *title = copy(imdb->iterMovie->name);
     return title;
 }
 
 size_t getVotes(imdbADT imdb)
 {
-    if(imdb == NULL)
+    if (imdb == NULL)
         return 0;
     return imdb->iterMovie->votes;
 }
 
 float getRating(imdbADT imdb)
 {
-    if(imdb == NULL)
+    if (imdb == NULL)
         return 0;
     return imdb->iterMovie->rating;
 }
 
-char * getGenre(imdbADT imdb)
+char *getGenre(imdbADT imdb)
 {
-    if(imdb == NULL)
+    if (imdb == NULL)
         return NULL;
-    char * out = copy(imdb->iterMovie->genres);
+    char *out = copy(imdb->iterMovie->genres);
     return out;
 }
 
+//Libera la memoria reservada para los generos de manera recursiva (listas)
 static void freeGenreRec(TListGenre listG)
 {
     if (listG == NULL)
@@ -361,6 +377,7 @@ static void freeGenreRec(TListGenre listG)
     free(listG);
 }
 
+//Libera la memoria reservada para el top de peliculas de manera recursiva (listas)
 static void freeTopRec(TListMovie listM)
 {
     if (listM == NULL)
@@ -371,6 +388,7 @@ static void freeTopRec(TListMovie listM)
     free(listM);
 }
 
+//Libera la memoria reservada para los anios de manera recursiva (listas)
 static void freeYearRec(TListYear listY)
 {
     if (listY == NULL)
