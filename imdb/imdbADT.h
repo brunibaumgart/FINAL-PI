@@ -49,7 +49,7 @@ int hasNextYear(imdbADT imdb);
 int nextYear(imdbADT imdb);
 
 //Inicia el iterador por generos (lo hace en el anio correspondiente donde se esta iterando)
-void toBeginGenre(imdbADT imdb);
+void toBeginGenre(imdbADT imdb, size_t year);
 
 //Verifica si existe un siguiente genero, si es asi devuelve 1, o 0 en caso contrario
 int hasNextGenre(imdbADT imdb);
@@ -58,7 +58,7 @@ int hasNextGenre(imdbADT imdb);
 int nextGenre(imdbADT imdb);
 
 //Inicia el iterador en la primer pelicula del top por anio
-void toBeginMovieTop(imdbADT imdb);
+void toBeginMovieTop(imdbADT imdb, size_t year);
 
 //Verifica si existe una siguiente pelicula en el top, si es asi devuelve 1, o 0 en caso contrario
 int hasNextMovieTop(imdbADT imdb);

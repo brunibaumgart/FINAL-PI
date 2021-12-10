@@ -294,9 +294,10 @@ int nextYear(imdbADT imdb)
     imdb->iterYear = imdb->iterYear->next;
 }
 
-void toBeginGenre(imdbADT imdb)
+void toBeginGenre(imdbADT imdb, size_t year)
 {
-    imdb->iterGenre = imdb->iterYear->firstGenre;
+    TListYear listY = searchYear(imdb->firstYear, year);
+    imdb->iterGenre = listY->firstGenre;
 }
 
 int hasNextGenre(imdbADT imdb)
@@ -313,9 +314,10 @@ int nextGenre(imdbADT imdb)
     imdb->iterGenre = imdb->iterGenre->next;
 }
 
-void toBeginMovieTop(imdbADT imdb)
+void toBeginMovieTop(imdbADT imdb, size_t year)
 {
-    imdb->iterMovie = imdb->iterYear->firstInTop;
+    TListYear listY = searchYear(imdb->firstYear, year);
+    imdb->iterMovie = listY->firstInTop;
 }
 
 int hasNextMovieTop(imdbADT imdb)

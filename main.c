@@ -175,7 +175,8 @@ int main(int argc, char *argv[])
     while (hasNextYear(imdb))
     {
         year = getYear(imdb);
-        toBeginGenre(imdb);
+        toBeginGenre(imdb, year);
+        toBeginMovieTop(imdb, year);
         toQuery1(imdb, query1, year);
         while (hasNextGenre(imdb))
         {
