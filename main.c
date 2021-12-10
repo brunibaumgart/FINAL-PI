@@ -166,11 +166,15 @@ int main(int argc, char *argv[])
     {
         toBeginGenre(imdb);
         toQuery1();
-        toQuery2();
         while (hasNextGenre(imdb))
         {
-            
+            toQuery2();
             nextGenre(imdb);
+        }
+        while(hasNextMovieTop(imdb))
+        {
+            toQuery3();
+            nextMovieInTop(imdb);
         }
         nextYear(imdb);
     }

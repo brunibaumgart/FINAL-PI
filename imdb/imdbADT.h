@@ -35,10 +35,10 @@ int addToGenre(imdbADT imdb, titleTypeG type, char *genres, int year);
 //Inicia el iterador por anios
 void toBeginYear(imdbADT imdb);
 
-//Verifica si existe un año despues del actual, devuelve 1 si lo hay, 0 si no
+//Verifica si existe un anio despues del actual, devuelve 1 si lo hay, 0 si no
 int hasNextYear(imdbADT imdb);
 
-//Avanza el iterador al siguiente año, retorna 0 en caso de algun error, 1 si no existio tal problema
+//Avanza el iterador al siguiente anio, retorna 0 en caso de algun error, 1 si no existio tal problema
 int nextYear(imdbADT imdb);
 
 //Inicia el iterador por generos (lo hace en el anio correspondiente donde se esta iterando)
@@ -50,7 +50,7 @@ int hasNextGenre(imdbADT imdb);
 //Avanza el iterador al siguiente genero, retorna 0 en caso de algun error, 1 si no existio tal problema
 int nextGenre(imdbADT imdb);
 
-//Inicia el iterador en la primer pelicula del top por año
+//Inicia el iterador en la primer pelicula del top por anio
 void toBeginMovieTop(imdbADT imdb);
 
 //Verifica si existe un siguiente pelicula en el top, si es asi devuelve 1 sino 0
@@ -61,9 +61,13 @@ int nextMovieInTop(imdbADT imdb);
 
 size_t getTypeCant(imdbADT imdb, titleTypeY type);
 
-char * getFilm(imdbADT imdb, titleTypeY type);
+char *  getFilm(imdbADT imdb);
 
-size_t getVotes(imdbADT imdb, titleTypeY type);
+size_t getVotes(imdbADT imdb);
+
+float getRating(imdbADT imdb);
+
+char * getGenre(imdbADT imdb);
 
 //Libera todos los recursos del imdb
 void freeImdb(imdbADT imdb);
