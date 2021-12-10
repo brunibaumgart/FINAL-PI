@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "imdb/imdbADT.h"
+#include "imdbADT/imdbADT.h"
 
 #define FIRSTLINE1 "year;films;series;shorts"
 #define FIRSTLINE2 "year;genre;films;series"

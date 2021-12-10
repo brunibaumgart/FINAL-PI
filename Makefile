@@ -12,11 +12,11 @@ all: $(OBJECTS)
 debug: FLAGS += $(DEBUG)
 debug: all
 
-main.o: main.c imdb/imdbADT.h
+main.o: main.c imdbADT/imdbADT.h
 	$(COMPILER) $(FLAGS) -c main.c
 
-imdbADT.o: imdb/imdbADT.c imdb/imdbADT.h
-	$(COMPILER) $(FLAGS) -c imdb/imdbADT.c
+imdbADT.o: imdbADT/imdbADT.c imdbADT/imdbADT.h
+	$(COMPILER) $(FLAGS) -c imdbADT/imdbADT.c
 
 cleanAll: cleanQueries cleanBinary cleanObjects
 

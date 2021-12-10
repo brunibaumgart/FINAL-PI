@@ -91,9 +91,12 @@ static char *copy(const char *s)
 //Elimina el ultimo elemento del top (el menos votado o aquel que tiene menor orden alfabetico)
 static void deleteLastTop(TListMovie listM)
 {
-    if (listM == NULL || listM->next == NULL)
+    if (listM == NULL)
+        return;
+    if (listM->next == NULL)
     {
         free(listM);
+        return;
     }
     deleteLastTop(listM->next);
 }
