@@ -8,8 +8,8 @@ typedef struct imdbCDT *imdbADT;
 #define TSERIES "tvSeries"
 #define TMSERIES "tvMiniSeries"
 
-#define ERRORB (-2) //Error al accceder a datos del back
-#define ERRORQ (-3) //Error al crear las queries
+#define ERRORB (-1) //Error al accceder a datos del back
+#define ERRORQ (-2) //Error al crear las queries
 
 typedef enum titleTypeG
 {
