@@ -8,7 +8,9 @@ typedef struct imdbCDT *imdbADT;
 #define TSERIES "tvSeries"
 #define TMSERIES "tvMiniSeries"
 
-#define ERROR (-1)
+#define ERRORY (-1)
+#define ERRORL (-2)
+
 typedef enum titleTypeG
 {
     MOVIE_G = 0,

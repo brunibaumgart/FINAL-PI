@@ -135,7 +135,8 @@ int main(int argc, char *argv[])
         //Debemos verificar que el anio y los votos sean valido (startYear != \N && votes != 0)
         if (!invalidYear && !invalidVotes)
         {
-            titleTypeG typeFlag; //Indicador de pelicula o serie para generos
+            titleTypeG typeFlag = CANT_TYPES_G; //Indicador de pelicula o serie para generos (ahorramos volver a hacer las condiciones de los if's del anio)
+            //Debemos inicializar el flag con el fin de que, en caso de no ser una pelicula o una serie, el mismo no tome valores arbitrarios
             if (strcmp(type, TSHORT) == 0)
             {
                 addToYear(imdb, SHORT_Y, title, year, genres, rating, votes);
@@ -158,7 +159,7 @@ int main(int argc, char *argv[])
             {
                 //Debemos verificar que el genero se encuentre dentro de los primeros MAXGEN generos
                 //En caso de que no haya genero (\N), se ignora unicamente para addToGenre
-                if (checkGenre(genToBack, allGens, limit))
+                if (checkGenre(genToBack, allGens, limit) && typeFlag < CANT_TYPES_G)
                 {
                     addToGenre(imdb, typeFlag, genToBack, year);
                 }
@@ -263,12 +264,15 @@ void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, in
 
 int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit)
 {
+    int c;
     for (int i = 0; i < limit; i++)
     {
-        if (strcmp(genre, genList[i]) == 0)
+        if ((c = strcmp(genre, genList[i])) == 0)
         {
             return 1;
         }
+        if (c > 0)
+            return 0;
     }
     return 0;
 }
