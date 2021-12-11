@@ -21,7 +21,7 @@ typedef struct genre
 {
     char *genre;                //Nombre del genero actual
     size_t types[CANT_TYPES_G]; //En cada posicion se guarda la cantidad de peliculas/series del genero
-    struct genres *next;        //Puntero al siguiente genero
+    struct genre *next;         //Puntero al siguiente genero
 } TGenre;
 
 typedef TGenre *TListGenre;
@@ -329,15 +329,16 @@ void toBeginGenre(imdbADT imdb, size_t year)
     TListYear listY = searchYear(imdb->firstYear, year);
     if (listY == NULL)
     {
-        return;
-    }
-    imdb->iterGenre = listY->firstGenre;
+        imdb->iterGenre = NULL ;
+    }else
+        imdb->iterGenre = listY->firstGenre;
 }
 
 int hasNextGenre(imdbADT imdb)
 {
     return imdb->iterGenre != NULL;
 }
+
 
 int nextGenre(imdbADT imdb)
 {
@@ -346,6 +347,7 @@ int nextGenre(imdbADT imdb)
         return 0;
     }
     imdb->iterGenre = imdb->iterGenre->next;
+    return 1;
 }
 
 void toBeginMovieTop(imdbADT imdb, size_t year)
@@ -368,6 +370,7 @@ int nextMovieInTop(imdbADT imdb)
     if (!hasNextMovieTop(imdb))
         return 0;
     imdb->iterMovie = imdb->iterMovie->next;
+    return 1;
 }
 
 int getYear(imdbADT imdb)

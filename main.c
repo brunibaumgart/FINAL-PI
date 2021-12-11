@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
 
     while (fgets(gen, GEN_SIZE, genresF) != NULL && limit != MAXGEN)
     {
+        gen[strcspn(gen, "\n")] = 0; //Elimina el salto de linea del fgets
         strcpy(allGens[limit++], gen);
     }
 
@@ -97,10 +98,11 @@ int main(int argc, char *argv[])
 
     while (fgets(buff, MAXBUFF, filmsF) != NULL)
     {
-        int invalidYear = 0; //Si el filme no tiene anio de comienzo, debemos
+        int invalidYear = 0;  //Si el filme no tiene anio de comienzo, se ignora
+        int invalidVotes = 0; //Si el filme no tiene votos, se ignora
         token = strtok(buff, DELIM);
         size_t place; //Representa el lugar/campo en el que me encuentro en la linea (id,type,etc)
-        for (place = 0; place < CANTDATA && token != NULL && !invalidYear; place++, token = strtok(NULL, DELIM))
+        for (place = 0; place < CANTDATA && token != NULL && !invalidYear && !invalidVotes; place++, token = strtok(NULL, DELIM))
         {
             switch (place)
             {
@@ -112,9 +114,7 @@ int main(int argc, char *argv[])
                 break;
             case STYEAR:
                 if (strcmp(token, NONE) == 0)
-                {
                     invalidYear = 1;
-                }
                 year = atoi(token);
                 break;
             case GENRES:
@@ -126,12 +126,14 @@ int main(int argc, char *argv[])
 
             case VOTES:
                 votes = atoi(token);
+                if (votes == 0)
+                    invalidVotes = 1;
                 break;
             }
         }
 
-        //Debemos verificar que el anio sea valido (startYear != \N)
-        if (!invalidYear)
+        //Debemos verificar que el anio y los votos sean valido (startYear != \N && votes != 0)
+        if (!invalidYear && !invalidVotes)
         {
             titleTypeG typeFlag; //Indicador de pelicula o serie para generos
             if (strcmp(type, TSHORT) == 0)
@@ -154,6 +156,8 @@ int main(int argc, char *argv[])
             char *genToBack = strtok(genres, DELIMGENRE);
             while (genToBack != NULL)
             {
+                //Debemos verificar que el genero se encuentre dentro de los primeros MAXGEN generos
+                //En caso de que no haya genero (\N), se ignora unicamente para addToGenre
                 if (checkGenre(genToBack, allGens, limit))
                 {
                     addToGenre(imdb, typeFlag, genToBack, year);
@@ -198,10 +202,9 @@ void toQuery1(imdbADT imdb, FILE *query, size_t year)
     int cants[CANT_TYPES_Y];
     for (int i = 0; i < CANT_TYPES_Y; i++)
     {
-        if ((cants[i] = getTypeCant(imdb, i)) == ERROR)
-            return;
+        cants[i] = getTypeCant(imdb, i);
     }
-    fprintf(query, "%d%s%d%s%d%s%d\n", year, DELIM, cants[MOVIE_Y], DELIM, cants[SERIES_Y], DELIM, cants[SHORT_Y]);
+    fprintf(query, "%zu%s%d%s%d%s%d\n", year, DELIM, cants[MOVIE_Y], DELIM, cants[SERIES_Y], DELIM, cants[SHORT_Y]);
 }
 
 void toQuery2(imdbADT imdb, FILE *query, size_t year)
@@ -209,17 +212,17 @@ void toQuery2(imdbADT imdb, FILE *query, size_t year)
     int cants[CANT_TYPES_G];
     for (int i = 0; i < CANT_TYPES_G; i++)
     {
-        if ((cants[i] = getTypeInGenre(imdb, i)) == ERROR)
-            return;
+        cants[i] = getTypeInGenre(imdb, i);
     }
-    fprintf(query, "%d%s%s%s%d%s%d\n", year, DELIM, getGenre(imdb), DELIM, cants[MOVIE_G], DELIM, cants[SERIES_G]);
+    fprintf(query, "%zu%s%s%s%d%s%d\n", year, DELIM, getGenre(imdb), DELIM, cants[MOVIE_G], DELIM, cants[SERIES_G]);
 }
 
 void toQuery3(imdbADT imdb, FILE *query, size_t year)
 {
-    char * genres = getTopGenres(imdb), movie = getMovie(imdb);
+    char *genres = getTopGenres(imdb);
+    char *movie = getMovie(imdb);
     //chequear si los titulos/generos son null (lo mismo con votos,rating)
-    fprintf(query, "%d%s%s%s%d%s%.2f%s%s\n", year, DELIM, movie, DELIM, getVotes(imdb), DELIM, getRating(imdb), DELIM, genres);
+    fprintf(query, "%zu%s%s%s%d%s%.2f%s%s\n", year, DELIM, movie, DELIM, getVotes(imdb), DELIM, getRating(imdb), DELIM, genres);
     free(genres);
     free(movie);
 }
