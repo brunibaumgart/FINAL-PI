@@ -101,7 +101,7 @@ static char *copy(const char *s)
         if (dim % BLOCK == 0)
         {
             aux = realloc(aux, (dim + BLOCK) * sizeof(char));
-            //Si no pudimos reservar memoria
+            //Si no pudimos reservar memoria en el heap, retorno NULL
             if (aux == NULL || errno == ENOMEM)
             {
                 return NULL;
@@ -111,6 +111,7 @@ static char *copy(const char *s)
     }
     aux = realloc(aux, (dim + 1) * sizeof(char));
 
+    //Si no pudimos reservar memoria en el heap, retorno NULL
     if (aux == NULL || errno == ENOMEM)
     {
         return NULL;
@@ -122,8 +123,10 @@ static char *copy(const char *s)
 
 static TListMovie deleteLastTop(TListMovie listM)
 {
+    //Caso base
     if (listM == NULL)
         return listM;
+    //Si es la ultima posicion, se borra la pelicula de la lista
     if (listM->next == NULL)
     {
         freeTopRec(listM);
@@ -167,34 +170,37 @@ static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title,
         newMovie->rating = rating;
         newMovie->genres = copy(genres);
         newMovie->next = listM;
-        *lastM = newMovie;
-        (*flag) = 1;
+        *lastM = newMovie; //Actualizamos la ultima pelicula agregada al top 5
+        (*flag) = 1;       //Seteamos el flag, pues se ha logrado agregar al top 5
         return newMovie;
     }
-    //Siempre inserto
+    //Sigo buscando en la sublista
     listM->next = updateTopRec(listM->next, lastM, title, genres, rating, votes, top - 1, flag);
     return listM;
 }
 
 static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *added)
 {
-    int c;
+    int c, flag = 0; //El flag indica si se agrega la pelicula al top 5. De esa manera podemos aumentar el size
     if (listY == NULL || (c = compare(listY->year, year)) < 0)
     {
         TListYear newYear = calloc(1, sizeof(TYear));
-        //Debemos chequear si se ha podido reservar memoria
+
+        //Si no pudimos reservar memoria en el heap, devuelvo la lista
         if (newYear == NULL || errno == ENOMEM)
         {
             return listY;
         }
+
         newYear->year = year;
+
+        //En caso de ser una pelicula, debemos actualizar (o no) el top 5 de las mas votadas
         if (type == MOVIE_Y)
         {
-            int flag = 0;
             newYear->firstInTop = updateTopRec(newYear->firstInTop, &newYear->lastAddedInTop, title, genres, rating, votes, TOP, &flag);
-            newYear->sizeTop = 1;
+            newYear->sizeTop = flag; //firstInTop va a estar vacio, por lo que igualamos el size a flag en vez de sumarlo
         }
-        (*added) = 1;
+        (*added) = 1; //Seteamos el flag added en 1, pues se ha agregado un anio
         newYear->types[type] = 1;
         newYear->next = listY;
         return newYear;
@@ -203,17 +209,17 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
     {
         if (type == MOVIE_Y)
         {
-            int flag = 0;
             listY->firstInTop = updateTopRec(listY->firstInTop, &listY->lastAddedInTop, title, genres, rating, votes, TOP, &flag);
             listY->sizeTop += flag;
+
+            //Si la cantidad del top 5 supera el maximo (TOP), al haber desplazado las peliculas en una posicion, debo eliminar la ultima del top
             if (listY->sizeTop > TOP)
             {
-                //Si supero el maximo, al haber desplazado las peliculas en una posicion, debo eliminar la ultima del top
                 listY->lastAddedInTop = deleteLastTop(listY->lastAddedInTop);
                 listY->sizeTop--;
             }
         }
-        listY->types[type]++;
+        listY->types[type]++; //Aumento el type que se agrego
         return listY;
     }
     listY->next = addToYearRec(listY->next, type, title, year, genres, rating, votes, added);
@@ -222,9 +228,9 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
 
 int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes)
 {
-    int flag = 0; //Indica si se ha agregado un nuevo anio
-    imdb->firstYear = addToYearRec(imdb->firstYear, type, title, year, genres, rating, votes, &flag);
-    return flag;
+    int added = 0; //Indica si se ha agregado un nuevo anio
+    imdb->firstYear = addToYearRec(imdb->firstYear, type, title, year, genres, rating, votes, &added);
+    return added;
 }
 
 static TListYear searchYear(TListYear listY, int year)
@@ -376,14 +382,14 @@ int nextMovieInTop(imdbADT imdb)
 int getYear(imdbADT imdb)
 {
     if (imdb == NULL || imdb->iterYear == NULL)
-        return ERROR;
+        return ERRORB;
     return imdb->iterYear->year;
 }
 
 int getTypeCant(imdbADT imdb, titleTypeY type)
 {
     if (imdb == NULL || imdb->iterYear == NULL)
-        return ERROR;
+        return ERRORB;
     return imdb->iterYear->types[type];
 }
 
@@ -398,7 +404,7 @@ char *getGenre(imdbADT imdb)
 int getTypeInGenre(imdbADT imdb, titleTypeG type)
 {
     if (imdb == NULL || imdb->iterGenre == NULL)
-        return ERROR;
+        return ERRORB;
     return imdb->iterGenre->types[type];
 }
 
@@ -413,14 +419,14 @@ char *getMovie(imdbADT imdb)
 int getVotes(imdbADT imdb)
 {
     if (imdb == NULL || imdb->iterMovie == NULL)
-        return ERROR;
+        return ERRORB;
     return imdb->iterMovie->votes;
 }
 
 float getRating(imdbADT imdb)
 {
     if (imdb == NULL || imdb->iterMovie == NULL)
-        return ERROR;
+        return ERRORB;
     return imdb->iterMovie->rating;
 }
 
@@ -438,8 +444,8 @@ static void freeGenreRec(TListGenre listG)
     {
         return;
     }
-    freeGenreRec(listG->next);
-    free(listG->genre);
+    freeGenreRec(listG->next);//Liberamos la sublista de generos
+    free(listG->genre); //Liberamos el string del genero de la lista
     free(listG);
 }
 
@@ -449,9 +455,9 @@ static void freeTopRec(TListMovie listM)
     {
         return;
     }
-    freeTopRec(listM->next);
-    free(listM->name);
-    free(listM->genres);
+    freeTopRec(listM->next); //Liberamos la sublista de top 5 peliculas
+    free(listM->name);//Liberamos el string del titulo de la pelicula
+    free(listM->genres); //Liberamos el string de los generos de la pelicula
     free(listM);
 }
 
@@ -461,14 +467,14 @@ static void freeYearRec(TListYear listY)
     {
         return;
     }
-    freeTopRec(listY->firstInTop);
-    freeGenreRec(listY->firstGenre);
-    freeYearRec(listY->next);
+    freeTopRec(listY->firstInTop); //Liberamos la lista de top 5 peliculas
+    freeGenreRec(listY->firstGenre);//Liberamos la lista de generos
+    freeYearRec(listY->next);//Liberamos la sublista de anios
     free(listY);
 }
 
 void freeImdb(imdbADT imdb)
 {
-    freeYearRec(imdb->firstYear);
+    freeYearRec(imdb->firstYear);//Liberamos la lista de anios
     free(imdb);
 }
