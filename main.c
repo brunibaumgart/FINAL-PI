@@ -217,13 +217,16 @@ void toQuery2(imdbADT imdb, FILE *query, size_t year)
 
 void toQuery3(imdbADT imdb, FILE *query, size_t year)
 {
+    char * genres = getTopGenres(imdb), movie = getMovie(imdb);
     //chequear si los titulos/generos son null (lo mismo con votos,rating)
-    fprintf(query, "%d%s%s%s%d%s%.2f%s%s\n", year, DELIM, getMovie(imdb), DELIM, getVotes(imdb), DELIM, getRating(imdb), DELIM, getTopGenres(imdb));
+    fprintf(query, "%d%s%s%s%d%s%.2f%s%s\n", year, DELIM, movie, DELIM, getVotes(imdb), DELIM, getRating(imdb), DELIM, genres);
+    free(genres);
+    free(movie);
 }
 
 void errorOut(const char *message, int code)
 {
-    fprintf(stderr, "%s Exit code: %d", message, code);
+    fprintf(stderr, "%s\nExit code: %d", message, code);
     exit(code);
 }
 

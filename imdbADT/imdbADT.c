@@ -47,18 +47,50 @@ typedef struct imdbCDT
     TListMovie iterMovie; ////Iterador para acceder a los campos correspondiente por pelicula
 } imdbCDT;
 
+//Devuelve < 0, = 0 o > 0 con el fin de comparar tanto anios como votos
+static int compare(size_t e1, size_t e2);
+
+//Devuelve una copia del string s, o NULL en caso de que no se haya logrado reservar memoria
+static char *copy(const char *s);
+
+//Elimina el ultimo elemento del top (el menos votado o aquel que tiene menor orden alfabetico)
+static TListMovie deleteLastTop(TListMovie listM);
+
+//Compara por cantidad de votos, y por orden alfabetico en caso de ser necesario
+static int compareTop(size_t v1, size_t v2, char *t1, char *t2);
+
+//Actualiza el top 5 de peliculas
+//Devuelve una lista ordenada de las peliculas con mas votos
+static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title, char *genres, float rating, size_t votes, size_t top, int *flag);
+
+//Carga los datos a un nuevo anio, o los actualiza en caso de que ya existiera
+static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *added);
+
+//Devuelve el anio a buscar, en caso de no encontrarlo retorna NULL
+static TListYear searchYear(TListYear listY, int year);
+
+//Carga los datos a un nuevo genero, o los actualiza en caso de que ya existiera
+static TListGenre addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag);
+
+//Libera la memoria reservada para los generos de manera recursiva (listas)
+static void freeGenreRec(TListGenre listG);
+
+//Libera la memoria reservada para el top de peliculas de manera recursiva (listas)
+static void freeTopRec(TListMovie listM);
+
+//Libera la memoria reservada para los anios de manera recursiva (listas)
+static void freeYearRec(TListYear listY);
+
 imdbADT newImdb()
 {
     return calloc(1, sizeof(imdbCDT));
 }
 
-//Devuelve < 0, = 0 o > 0 con el fin de comparar tanto anios como votos
 static int compare(size_t e1, size_t e2)
 {
     return e1 - e2;
 }
 
-//Devuelve una copia del string s, o NULL en caso de que no se haya logrado reservar memoria
 static char *copy(const char *s)
 {
     char *aux = NULL;
@@ -88,20 +120,19 @@ static char *copy(const char *s)
     return aux;
 }
 
-//Elimina el ultimo elemento del top (el menos votado o aquel que tiene menor orden alfabetico)
-static void deleteLastTop(TListMovie listM)
+static TListMovie deleteLastTop(TListMovie listM)
 {
     if (listM == NULL)
-        return;
+        return listM;
     if (listM->next == NULL)
     {
-        free(listM);
-        return;
+        freeTopRec(listM);
+        return NULL;
     }
-    deleteLastTop(listM->next);
+    listM->next = deleteLastTop(listM->next);
+    return listM;
 }
 
-//Comapara por cantidad de votos, y por orden alfabetico en caso de ser necesario
 static int compareTop(size_t v1, size_t v2, char *t1, char *t2)
 {
     int out = compare(v1, v2);
@@ -113,8 +144,6 @@ static int compareTop(size_t v1, size_t v2, char *t1, char *t2)
     return out;
 }
 
-//Actualiza el top 5 de peliculas
-//Devuelve una lista ordenada de las peliculas con mas votos
 static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title, char *genres, float rating, size_t votes, size_t top, int *flag)
 {
     int c;
@@ -143,11 +172,10 @@ static TListMovie updateTopRec(TListMovie listM, TListMovie *lastM, char *title,
         return newMovie;
     }
     //Siempre inserto
-    listM->next = updateTopRec(listM, lastM, title, genres, rating, votes, top - 1, flag);
+    listM->next = updateTopRec(listM->next, lastM, title, genres, rating, votes, top - 1, flag);
     return listM;
 }
 
-//Carga los datos a un nuevo anio, o los actualiza en caso de que ya existiera
 static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, size_t year, char *genres, float rating, size_t votes, int *added)
 {
     int c;
@@ -181,7 +209,7 @@ static TListYear addToYearRec(TListYear listY, titleTypeY type, char *title, siz
             if (listY->sizeTop > TOP)
             {
                 //Si supero el maximo, al haber desplazado las peliculas en una posicion, debo eliminar la ultima del top
-                deleteLastTop(listY->lastAddedInTop);
+                listY->lastAddedInTop = deleteLastTop(listY->lastAddedInTop);
                 listY->sizeTop--;
             }
         }
@@ -199,7 +227,6 @@ int addToYear(imdbADT imdb, titleTypeY type, char *title, size_t year, char *gen
     return flag;
 }
 
-//Devuelve el anio a buscar, en caso de no encontrarlo retorna NULL
 static TListYear searchYear(TListYear listY, int year)
 {
     int c;
@@ -219,7 +246,6 @@ static TListYear searchYear(TListYear listY, int year)
     return searchYear(listY->next, year);
 }
 
-//Carga los datos a un nuevo genero, o los actualiza en caso de que ya existiera
 static TListGenre addToGenreRec(TListGenre listG, titleTypeG type, char *genre, int year, int *flag)
 {
     int value;
@@ -295,11 +321,16 @@ int nextYear(imdbADT imdb)
         return 0;
     }
     imdb->iterYear = imdb->iterYear->next;
+    return 1;
 }
 
 void toBeginGenre(imdbADT imdb, size_t year)
 {
     TListYear listY = searchYear(imdb->firstYear, year);
+    if (listY == NULL)
+    {
+        return;
+    }
     imdb->iterGenre = listY->firstGenre;
 }
 
@@ -320,6 +351,10 @@ int nextGenre(imdbADT imdb)
 void toBeginMovieTop(imdbADT imdb, size_t year)
 {
     TListYear listY = searchYear(imdb->firstYear, year);
+    if (listY == NULL)
+    {
+        return;
+    }
     imdb->iterMovie = listY->firstInTop;
 }
 
@@ -394,7 +429,6 @@ char *getTopGenres(imdbADT imdb)
     return out;
 }
 
-//Libera la memoria reservada para los generos de manera recursiva (listas)
 static void freeGenreRec(TListGenre listG)
 {
     if (listG == NULL)
@@ -402,10 +436,10 @@ static void freeGenreRec(TListGenre listG)
         return;
     }
     freeGenreRec(listG->next);
+    free(listG->genre);
     free(listG);
 }
 
-//Libera la memoria reservada para el top de peliculas de manera recursiva (listas)
 static void freeTopRec(TListMovie listM)
 {
     if (listM == NULL)
@@ -413,10 +447,11 @@ static void freeTopRec(TListMovie listM)
         return;
     }
     freeTopRec(listM->next);
+    free(listM->name);
+    free(listM->genres);
     free(listM);
 }
 
-//Libera la memoria reservada para los anios de manera recursiva (listas)
 static void freeYearRec(TListYear listY)
 {
     if (listY == NULL)
