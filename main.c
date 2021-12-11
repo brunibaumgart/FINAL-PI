@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     size_t year, votes, limit = 0;
     float rating;
 
-    //Chequear si el archivo genres es vacio, en caso de serlo, aborta el programa
+    //gen recibe el encabezado de la base de datos, en caso de archivo vacio, aborta el programa
     if (fgets(gen, GEN_SIZE, genresF) == NULL)
     {
         closeAll(imdb, files, fileCount, "El archivo genres se encuentra vacio", EINVAL);
@@ -105,13 +105,13 @@ int main(int argc, char *argv[])
         strcpy(allGens[limit++], gen);
     }
 
-    //Chequear si el archivo imdb es vacio, en caso de serlo, aborta el programa
+    //buff recibe el encabezado de la base de datos, en caso de archivo vacio, aborta el programa
     if (fgets(buff, MAXBUFF, filmsF) == NULL)
     {
         closeAll(imdb, files, fileCount, "El archivo imdb se encuentra vacio", EINVAL);
     }
 
-    //Carga los datos de imdb y genres al TAD
+    //Carga de datos del imdb y genres al TAD
     //Cada vez que entra al ciclo va a encargarse de una pelicula por vez, es decir, una linea por vez
     while (fgets(buff, MAXBUFF, filmsF) != NULL)
     {

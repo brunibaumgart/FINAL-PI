@@ -270,7 +270,7 @@ static TListGenre addToGenreRec(TListGenre listG, titleTypeG type, char *genre, 
         newGenre->genre = copy(genre);
 
         //Debemos chequear si se ha logrado reservar memoria
-        if (newGenre->genre == NULL || errno == ENOMEM) //ERRNO = ENOMEM ES NECESARIO?
+        if (newGenre->genre == NULL || errno == ENOMEM)
         {
             //Como el nuevo nodo se ha creado, debemos liberar la memoria que se ha reservado
             free(newGenre);
