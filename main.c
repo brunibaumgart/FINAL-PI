@@ -30,7 +30,7 @@ void closeFiles(FILE *files[], size_t fileCount);
 void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, int code);
 
 //Verifica que el genero trabajado sea valido (se encuentre entre los primeros 32 obtenidos)
-int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit);
+int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit, int n);
 
 void toQuery1(imdbADT imdb, FILE *query, size_t year);
 
@@ -87,7 +87,6 @@ int main(int argc, char *argv[])
 
     while (fgets(gen, GEN_SIZE, genresF) != NULL && limit != MAXGEN)
     {
-        gen[strcspn(gen, "\n")] = 0; //Elimina el salto de linea del fgets
         strcpy(allGens[limit++], gen);
     }
 
@@ -159,7 +158,7 @@ int main(int argc, char *argv[])
             {
                 //Debemos verificar que el genero se encuentre dentro de los primeros MAXGEN generos
                 //En caso de que no haya genero (\N), se ignora unicamente para addToGenre
-                if (checkGenre(genToBack, allGens, limit) && typeFlag < CANT_TYPES_G)
+                if (checkGenre(genToBack, allGens, limit, strlen(genToBack)) && typeFlag < CANT_TYPES_G)
                 {
                     addToGenre(imdb, typeFlag, genToBack, year);
                 }
@@ -215,7 +214,9 @@ void toQuery2(imdbADT imdb, FILE *query, size_t year)
     {
         cants[i] = getTypeInGenre(imdb, i);
     }
-    fprintf(query, "%zu%s%s%s%d%s%d\n", year, DELIM, getGenre(imdb), DELIM, cants[MOVIE_G], DELIM, cants[SERIES_G]);
+    char *genre = getGenre(imdb);
+    fprintf(query, "%zu%s%s%s%d%s%d\n", year, DELIM, genre, DELIM, cants[MOVIE_G], DELIM, cants[SERIES_G]);
+    free(genre);
 }
 
 void toQuery3(imdbADT imdb, FILE *query, size_t year)
@@ -262,16 +263,16 @@ void closeAll(imdbADT imdb, FILE **files, int fileCount, const char *message, in
     errorOut(message, code);
 }
 
-int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit)
+int checkGenre(char *genre, char genList[MAXGEN][GEN_SIZE], size_t limit, int n)
 {
     int c;
     for (int i = 0; i < limit; i++)
     {
-        if ((c = strcmp(genre, genList[i])) == 0)
+        if ((c = strncmp(genre, genList[i], n)) == 0)
         {
             return 1;
         }
-        if (c > 0)
+        if (c < 0)
             return 0;
     }
     return 0;

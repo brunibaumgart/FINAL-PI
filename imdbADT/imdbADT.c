@@ -329,8 +329,9 @@ void toBeginGenre(imdbADT imdb, size_t year)
     TListYear listY = searchYear(imdb->firstYear, year);
     if (listY == NULL)
     {
-        imdb->iterGenre = NULL ;
-    }else
+        imdb->iterGenre = NULL;
+    }
+    else
         imdb->iterGenre = listY->firstGenre;
 }
 
@@ -338,7 +339,6 @@ int hasNextGenre(imdbADT imdb)
 {
     return imdb->iterGenre != NULL;
 }
-
 
 int nextGenre(imdbADT imdb)
 {
